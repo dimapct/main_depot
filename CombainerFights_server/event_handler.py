@@ -25,29 +25,27 @@ class EventHandlerServer():
         events = message[c.events]
         events_for_sending = []
         for event_type, event_dict in events.items():
-            obj_id = event_dict['obj_id']
-            obj = self.world.players_dict[player_id][obj_id]
+            event_owner_id = event_dict['owner_id']
+            obj = self.world.players_dict[player_id][event_owner_id]
 
-            processed_event = {obj.id: {}}
+            processed_event = {event_owner_id: {}}
 
             # DIRECTION
             if event_type == c.changed_direction:
                 obj.update_rotation(event_dict['data'])
                 event_info = round(obj.rotation, 2)
-                processed_event[obj.id][event_type] = event_info
+                processed_event[event_owner_id][event_type] = event_info
 
             # POSITION
             elif event_type == c.changed_position:
                 obj.update_position(event_dict['data'])
-                # x = round(obj.game_position.x, 2)
-                # y = round(obj.game_position.y, 2)
                 event_info = obj.game_rect.center
-                processed_event[obj.id][event_type] = event_info
+                processed_event[event_owner_id][event_type] = event_info
 
             # TOGGLE ZHATKA
             elif event_type == c.toggled_zhatka:
                 obj.zhatka.harvesting = not obj.zhatka.harvesting
-                processed_event[obj.id][event_type] = ()
+                processed_event[event_owner_id][event_type] = ()
 
             # WHEAT COUNT CHANGE
             elif event_type == c.wheat_count_changed:
@@ -55,7 +53,14 @@ class EventHandlerServer():
                 change_amount = event_dict['data']
                 obj.bunker.accumulator += change_amount
                 event_info = obj.bunker.accumulator
-                processed_event[obj.id][event_type] = event_info
+                processed_event[event_owner_id][event_type] = event_info
+
+            # WHEAT DROP
+            elif event_type == c.dropped:
+                # print('Got WHEAT dropped:', event_dict['data'])
+                new_id = event_dict['obj_id']
+                event_info = self.process_dropped(event_dict['data'], player_id, new_id, obj)
+                processed_event[event_owner_id][event_type] = event_info
 
             events_for_sending.append(processed_event)
 
@@ -63,14 +68,28 @@ class EventHandlerServer():
 
         return player_processed_events
 
+    def process_dropped(self, data, player_id, obj_id, owner):
+        amount = data[0]
+        combain_center = data[1]
+        if amount:
+            heap = self.world.create_heap(amount, combain_center, player_id, obj_id, owner)
+            event_info = (heap.accumulator, heap.game_rect.center, obj_id)
+            owner.bunker.accumulator = 0
+        else:
+            event_info = (0, None)
+
+
+
+        return event_info
+
     def create_ship_messages(self, ships):
         events_for_sending = []
         for ship in ships.values():
             ship_events = {ship.id: {}}
 
             if ship.state in ('swimming_to_buy', 'swimming_to_sell'):
-                x = round(ship.game_position[0])
-                y = round(ship.game_position[1])
+                x = round(ship.game_position[0], 2)
+                y = round(ship.game_position[1], 2)
                 event_type = c.changed_position
                 event_info = (x, y)
                 ship_events[ship.id][event_type] = event_info
@@ -80,6 +99,16 @@ class EventHandlerServer():
 
             else:
                 raise NotImplementedError('Invalid SHIP state', ship.state)
+
+            # Send Purchases
+            event_type = c.ship_bought
+            event_info = ship.purchases_to_send
+            if event_info:
+                ship_events[ship.id][event_type] = event_info
+            for heap_id, ignore in ship.purchases_to_send:
+                player_id = heap_id[0]
+                del self.world.players_dict[player_id][heap_id]
+            ship.purchases_to_send = []
 
             events_for_sending.append(ship_events)
 

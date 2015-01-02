@@ -33,3 +33,9 @@ class Heap(Bunker, game_object.GameObject):
         name = kwargs.get('name')
         Bunker.__init__(self, size, name)
         game_object.GameObject.__init__(self, owner_id, **kwargs)
+
+    @staticmethod
+    def get_game_xy(center_xy, obj_size):
+        x = center_xy[0] + obj_size[0]//2
+        y = center_xy[1]
+        return x, y

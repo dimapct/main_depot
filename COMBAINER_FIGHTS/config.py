@@ -6,7 +6,7 @@ from pygame.locals import *
 
 # Server data
 server_host = '185.25.119.112'
-server_host = 'localhost'
+# server_host = 'localhost'
 server_port = 31224
 
 separator = b'kitti'
@@ -65,6 +65,7 @@ changed_position = USEREVENT + 1
 toggled_zhatka = USEREVENT + 2
 wheat_count_changed = USEREVENT + 3
 dropped = USEREVENT + 4
+ship_bought = USEREVENT + 5
 to_check_wheat_to_report = USEREVENT + 7
 
 no_need_to_send_events = (to_check_wheat_to_report,)
@@ -113,3 +114,4 @@ combain_bunker_size = 10 * 1000  # kg
 wheat_pixel_cost = 1  # g
 
 
+combain_start_money = 0

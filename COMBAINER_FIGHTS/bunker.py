@@ -36,3 +36,9 @@ class Heap(Bunker, game_object.GameObject):
 
     def draw(self, surf):
         surf.blit(self.image, self.rect.topleft)
+
+    @staticmethod
+    def get_game_xy(center_xy, obj_size):
+        x = center_xy[0] + obj_size[0]//2
+        y = center_xy[1]
+        return x, y

@@ -50,6 +50,7 @@ changed_position = USEREVENT + 1
 toggled_zhatka = USEREVENT + 2
 wheat_count_changed = USEREVENT + 3
 dropped = USEREVENT + 4
+ship_bought = USEREVENT + 5
 broadcast_ship_updates = USEREVENT + 7
 
 # Functional keys
@@ -105,20 +106,19 @@ world_data_template = {'game_world_size': {'game_field_size': 0,
                        'user_list': {'id': {'nick': 0, 'color': 0, 'team': 0, 'game_xy': 0}}}
 
 # WHEAT
-
 harvested_field_color = (100, 50, 0, 255)
 wheat_color = Color('yellow')
 harvested_wheat_color = (wheat_color[0]-1, wheat_color[1]-1, wheat_color[2]-1, wheat_color[3]-0)
 wheat_pixel_cost = 1  # kg
-wheat_price = 1500  # UAH / ton
+wheat_price = 1  # UAH / kg
 
 
 #   --------------------    MECHANISMS    ----------------------
 #   SHIP
 sea_height = 1000
 ships_per_1000_pixels = 1
-ship_speed = 80.0 / 1000  # pixels / millisecond
-ship_bunker_size = 100 * 1000  # kg
+ship_speed = 30.0 / 1000  # pixels / millisecond
+ship_bunker_size = 30 * 1000  # kg
 ship_image_size = (156, 369)
 ship_buy_radius = 100
 ship_overlap = 30
@@ -128,7 +128,7 @@ combain_bunker_size = 10 * 1000  # kg
 comb_speed = 100.0 / 1000  # pixels / millisecond
 comb_rotate_speed = 360.0 / 5 / 1000  # degrees / millisecond
 combain_image_size = (30, 30)
-start_money = 0
+combain_start_money = 0
 
 #   ZHATKA
 zhatka_colors = ((127, 127, 127, 255), (200, 191, 231))

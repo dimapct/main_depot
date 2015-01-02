@@ -43,9 +43,8 @@ class EventHandler():
                 pass
 
             elif event.type == c.dropped:
-                self.process_dropped(event)
-
-
+                heap = self.process_dropped(self.boss.my_combain.id, self.boss.my_combain.id[0])
+                event.obj_id = heap.id
 
         events_to_send = [e for e in all_events
                           if e.type >= USEREVENT
@@ -66,14 +65,19 @@ class EventHandler():
 
                         # POSITION
                         if event_type == c.changed_position:
+                            print('client got SHIP at', event_info)
                             self.process_pos_change_other(obj, event_info)
+
+                        # SHIP BOUGHT WHEAT
+                        elif event_type == c.ship_bought:
+                            self.process_wheat_sell(event_info)
 
     def process_other_player_update(self, message):
         world = self.boss.w
         for player_id, data in message.items():
             if player_id in world.players_dict:
-                for obj_id, events in data.items():
-                    obj = world.players_dict[player_id][obj_id]
+                for event_owner_id, events in data.items():
+                    obj = world.players_dict[player_id][event_owner_id]
 
                     for event_type, event_info in events.items():
 
@@ -92,6 +96,17 @@ class EventHandler():
                         # WHEAT CHANGE
                         elif event_type == c.wheat_count_changed:
                             self.wheat_count_changed_other(obj, event_info)
+
+                        # WHEAT DROP
+                        elif event_type == c.dropped:
+                            weight = event_info[0]
+                            xy = event_info[1]
+                            id = event_info[2]
+                            self.process_dropped(event_owner_id,
+                                                 player_id,
+                                                 amount=weight,
+                                                 xy=xy,
+                                                 id=id)
 
     def set_repeated_events(self):
         # Set wheat_report timer
@@ -130,7 +145,7 @@ class EventHandler():
 
             elif event.key == K_o:
                 toggled_zhatka = True
-                self.inputs[c.toggle_zhatka].process_keydown()
+                # self.inputs[c.toggle_zhatka].process_keydown()
 
             elif event.key == K_SPACE:
                 self.inputs[c.fire_gun].process_keydown()
@@ -140,7 +155,7 @@ class EventHandler():
 
             elif event.key == K_d:
                 drop = True
-                self.inputs[c.set_mine].process_keydown()
+                # self.inputs[c.].process_keydown()
 
         # KEYUP
         for event in pygame.event.get(KEYUP):
@@ -173,22 +188,26 @@ class EventHandler():
                        c.right: self.inputs[c.right].time_pressed,
                        c.forward: self.inputs[c.forward].time_pressed,
                        c.backward: self.inputs[c.backward].time_pressed}
-            event = pygame.event.Event(c.changed_direction, obj_id=owner, data=buttons)
+            event = pygame.event.Event(c.changed_direction, owner_id=owner, data=buttons)
             pygame.event.post(event)
 
         if changed_position:
             buttons = {c.forward: self.inputs[c.forward].time_pressed,
                        c.backward: self.inputs[c.backward].time_pressed}
-            event = pygame.event.Event(c.changed_position, obj_id=owner, data=buttons)
+            event = pygame.event.Event(c.changed_position, owner_id=owner, data=buttons)
             pygame.event.post(event)
 
         if toggled_zhatka:
-            event = pygame.event.Event(c.toggled_zhatka, obj_id=owner)
+            event = pygame.event.Event(c.toggled_zhatka, owner_id=owner)
             pygame.event.post(event)
 
         if drop:
-            event = pygame.event.Event(c.dropped, obj_id=owner)
-            pygame.event.post(event)
+            amount = self.boss.my_combain.bunker.accumulator
+            if amount:
+                xy = self.boss.my_combain.game_rect.center
+                data = amount, xy
+                event = pygame.event.Event(c.dropped, owner_id=owner, data=data)
+                pygame.event.post(event)
 
         # Nullify buttons time pressed
         [self.inputs[button].nullify() for button in c.direction_arrows + c.position_arrows]
@@ -212,34 +231,53 @@ class EventHandler():
         wheat_to_report = self.boss.my_combain.wheat_to_report
         if wheat_to_report:
             event = pygame.event.Event(c.wheat_count_changed,
-                                       obj_id=self.boss.my_combain.id,
+                                       owner_id=self.boss.my_combain.id,
                                        data=wheat_to_report)
             pygame.event.post(event)
             self.boss.my_combain.wheat_to_report = 0
 
-    def process_dropped(self, event):
-        player_id = self.boss.my_combain.id[0]
-        obj = self.world.players_dict[player_id][event.obj_id]
-        weight = obj.bunker.accumulator
+    def process_dropped(self, owner_id, player_id, amount=None, xy=None, id=None):
+        obj = self.world.players_dict[player_id][owner_id]
+        if amount is None:
+            weight = obj.bunker.accumulator
+        else:
+            weight = amount
+
         if weight:
             obj.bunker.accumulator = 0
-            heap_size = c.combain_bunker_size * 100  # we need infinite size
-            x = obj.game_rect.right
-            y = obj.game_rect.centery
-            game_xy = x, y
+            heap_size = weight
+            if xy is None:
+                game_xy = bunker.Heap.get_game_xy(obj.game_rect.center, obj.game_rect.size)
+            else:
+                game_xy = xy
             image_size = max(int(weight/1000), 1)
             image = pygame.Surface((image_size, image_size))
             colorkey = image.get_at((0, 0))
             image.set_colorkey(colorkey)
             rect = image.get_rect()
             pygame.draw.circle(image, c.wheat_in_heap_color, rect.center, image_size//2)
-            heap = bunker.Heap(heap_size,
-                               player_id,
-                               name='wheat',
-                               game_map=self.world.game_map,
-                               game_xy=game_xy,
-                               image=image)
+            if id is None:
+                # Create self heap
+                heap = bunker.Heap(heap_size,
+                                   player_id,
+                                   name='wheat',
+                                   game_map=self.world.game_map,
+                                   game_xy=game_xy,
+                                   image=image,
+                                   weight=weight)
+            else:
+                # Create heap for other combains
+                heap = bunker.Heap(heap_size,
+                                   player_id,
+                                   id=id,
+                                   name='wheat',
+                                   game_map=self.world.game_map,
+                                   game_xy=game_xy,
+                                   image=image,
+                                   weight=weight)
             self.world.players_dict[player_id][heap.id] = heap
+            obj.bunker.accumulator = 0
+            return heap
 
     def process_dir_change_other(self, obj, data):
         # obj.rotation = data
@@ -259,6 +297,17 @@ class EventHandler():
 
     def wheat_count_changed_other(self, obj, data):
         obj.bunker.accumulator = data
+
+    def process_wheat_sell(self, deals):
+        for deal in deals:
+            heap_id = deal[0]
+            player_id = deal[0][0]
+            price = deal[1]
+            combain = self.world.combains_dict[player_id]
+            combain.account += price
+            heap = self.world.players_dict[player_id][heap_id]
+            heap.kill()
+            del self.world.players_dict[player_id][heap_id]
 
 
 class ButtonHandler():

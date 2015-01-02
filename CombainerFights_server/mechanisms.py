@@ -6,7 +6,6 @@ import bunker
 from pygame import sprite, Rect
 
 
-
 class Ship(game_object.GameObject):
     def __init__(self, owner_id, **kwargs):
         game_object.GameObject.__init__(self, owner_id, **kwargs)
@@ -21,8 +20,10 @@ class Ship(game_object.GameObject):
         h = kwargs.get('buy_radius') * 2
         x = self.game_rect.centerx
         y = self.game_rect.bottom
-        rect = Rect(x, y, h, h)
+        rect = Rect(0, 0, h, h)
+        rect.center = x, y
         self.buying_machine.rect = rect
+        self.purchases_to_send = []
 
     def update(self, t):
         if self.state == 'swimming_to_buy':
@@ -41,6 +42,7 @@ class Ship(game_object.GameObject):
         self.game_position.y += self.speed * t
         self.game_rect.centery = self.game_position.y
         self.buying_machine.rect.bottom = self.game_rect.bottom
+        print('SWIM TO BUY', self.game_position, t)
         self.update_region()
 
     def swim_to_sell(self, t):
@@ -83,16 +85,15 @@ class Ship(game_object.GameObject):
         for product in products:
             cost = self.price * product.weight
             product.owner.account += cost
+            purchase = (product.id, cost)
+            self.purchases_to_send.append(purchase)
 
     def onboard_purchases(self, products):
         for product in products:
-            self.bunker.accumulator += product.weight
-            # product.kill()
+            self.bunker += product.weight
+            print('SHIP bought {0} kg of wheat'.format(product.weight))
+            product.kill()
 
     def check_if_full(self):
         if self.bunker.accumulator == self.bunker.size:
             self.state = 'swimming_to_sell'
-
-
-
-

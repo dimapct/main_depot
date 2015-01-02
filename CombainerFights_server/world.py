@@ -7,6 +7,7 @@ import generator
 import game_map as gm
 from combain import Combain
 import random
+import bunker
 
 
 class World():
@@ -42,7 +43,7 @@ class World():
                               speed=c.comb_speed,
                               bunker_size=c.combain_bunker_size,
                               image_size=c.combain_image_size,
-                              start_money=c.start_money)
+                              start_money=c.combain_start_money)
             # Format combain id in order to follow the convention
             combain.id = combain.id[0], combain.id[0]
 
@@ -118,3 +119,23 @@ class World():
                                    overlap=c.ship_overlap)
 
             self.nps_dict['ships'][ship.id] = ship
+
+    def create_heap(self, amount, point, player_id, obj_id, owner):
+        game_xy = bunker.Heap.get_game_xy(point, c.combain_image_size)
+        image_size = max(int(amount/1000), 1)
+
+        heap = bunker.Heap(amount,
+                           None,
+                           name='wheat',
+                           id=obj_id,
+                           game_owner=owner,
+                           image_size=(image_size, image_size),
+                           game_xy=game_xy,
+                           game_map=self.game_map,
+                           weight=amount)
+        heap.accumulator = amount
+        heap.rect = heap.game_rect
+
+        self.players_dict[player_id][heap.id] = heap
+
+        return heap

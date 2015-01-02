@@ -21,6 +21,7 @@ class GameObject(pygame.sprite.Sprite):
         self.name = kwargs.get('name')
         self.state = kwargs.get('state')
         self.hp = kwargs.get('hp')
+        self.weight = kwargs.get('weight')
         self.speed = kwargs.get('speed')
         self.armor = kwargs.get('armor')
         self.game_map = kwargs.get('game_map')
@@ -96,7 +97,6 @@ class GameObject(pygame.sprite.Sprite):
             return False
 
     def update_region(self):
-        # KOSTIL for ships, as they may have negative x coord
         x, y = self.game_rect.center
         region, xy = self.game_map.get_region_and_xy((x, y))
         if self.region is None:
@@ -156,7 +156,6 @@ class GameObject(pygame.sprite.Sprite):
                 self.rotation = target
                 self.rotation_targets.popleft()
 
-
     def update_position(self, arrow_keys):
         movement_direction = 0.
         movement_time = 0.
@@ -191,7 +190,8 @@ class GameObject(pygame.sprite.Sprite):
 
     def update_position_with_interpolation(self, t):
         if self.move_targets:
-            # print(456, self.move_targets)
+            if self.name == 'ship':
+                print(456, self.move_targets, t)
 
             current_point = self.game_position.x, self.game_position.y
             target_point = self.move_targets[0]
@@ -205,12 +205,15 @@ class GameObject(pygame.sprite.Sprite):
             if distance_to_target > obj_1_step_distance:
                 vector.norm()
                 self.game_position += vector * obj_1_step_distance
+                print('interpolation', self.game_position)
 
             else:
                 # If distance is less than 1 step, then no need in interpolation
                 self.game_position.x = target_point[0]
                 self.game_position.y = target_point[1]
                 self.move_targets.popleft()
+                print('directly', self.game_position)
+
 
             self.game_rect.center = self.game_position[0], self.game_position[1]
 

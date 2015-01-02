@@ -21,6 +21,7 @@ class GameObject(pygame.sprite.Sprite):
         self.name = kwargs.get('name')
         self.state = kwargs.get('state')
         self.hp = kwargs.get('hp')
+        self.weight = kwargs.get('weight')
         self.speed = kwargs.get('speed')
         self.armor = kwargs.get('armor')
         self.game_map = kwargs.get('game_map')
@@ -96,7 +97,6 @@ class GameObject(pygame.sprite.Sprite):
             return False
 
     def update_region(self):
-        # KOSTIL for ships, as they may have negative x coord
         x, y = self.game_rect.center
         region, xy = self.game_map.get_region_and_xy((x, y))
         if self.region is None:

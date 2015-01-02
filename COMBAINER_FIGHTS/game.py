@@ -111,15 +111,6 @@ class Game():
 
         pygame.display.flip()
 
-    @staticmethod
-    def initialize_game_objects():
-        game_static = {'font_small': pygame.font.SysFont('comicsans', 16),
-                       'font_big': pygame.font.SysFont('comicsans', 30),
-                       'font_extra_big': pygame.font.SysFont('comicsans', 50),
-                       'clock': pygame.time.Clock()}
-
-        return game_static
-
     def create_initial_objects(self):
         self.event_handler = event_handler.EventHandler(self)
         self.message_handler = MessageHandler()
@@ -177,7 +168,6 @@ class Game():
                                 break
 
                     elif key == 'nps':
-                        print('Client got nps')
                         while True:
                             if self.w is not None:
                                 self.w.create_nps(value, self.resources['nps_images'])
@@ -225,3 +215,12 @@ class Game():
     #     event = pygame.event.Event(c.other_player_update, message=message)
     #     pygame.event.post(event)
         # print('{0} create game message event: {1}'.format(self.nick, message))
+
+    @staticmethod
+    def initialize_game_objects():
+        game_static = {'font_small': pygame.font.SysFont('comicsans', 16),
+                       'font_big': pygame.font.SysFont('comicsans', 30),
+                       'font_extra_big': pygame.font.SysFont('comicsans', 50),
+                       'clock': pygame.time.Clock()}
+
+        return game_static

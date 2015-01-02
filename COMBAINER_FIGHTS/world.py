@@ -48,14 +48,17 @@ class World():
             comb_dict = self.generate_combain_dict(new_images, color)
             start_game_xy = data['game_xy']
             bunker_size = c.combain_bunker_size
+            money = c.combain_start_money
             if player_id == self.id:
                 combain = Combain(player_id, name='combain', hp=c.combain_hp, speed=c.combain_speed, armor=c.combain_armor,
                                   game_map=self.game_map, comb_dict=comb_dict, game_xy=start_game_xy, image=new_images[0],
-                                  rotation_speed=c.combain_rotation_speed, bunker_size=bunker_size, image_size=(1, 1))
+                                  rotation_speed=c.combain_rotation_speed, bunker_size=bunker_size, image_size=(1, 1),
+                                  start_money=money)
             else:
                 combain = OtherCombain(player_id, name='combain', hp=c.combain_hp, speed=c.combain_speed, armor=c.combain_armor,
                                        game_map=self.game_map, comb_dict=comb_dict, game_xy=start_game_xy, image=new_images[0],
-                                       rotation_speed=c.combain_rotation_speed, bunker_size=bunker_size, image_size=(1, 1))
+                                       rotation_speed=c.combain_rotation_speed, bunker_size=bunker_size,
+                                       image_size=(1, 1), start_money=money)
 
             # Format combain id in order to follow the convention
             combain.id = combain.id[0], combain.id[0]
@@ -123,7 +126,5 @@ class World():
             region, xy = self.game_map.get_region_and_xy(ship.game_position)
             region.container['ship'].add(ship)
             self.nps_dict[id] = ship
-            print('SHIP created', ship.game_position, ship.rect)
-
 
 

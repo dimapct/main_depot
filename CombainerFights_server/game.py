@@ -51,6 +51,7 @@ class Game():
                 # time.sleep(0.05)
                 pass
 
+
     def process_nps_events(self):
         nps_events = self.event_handler.handle_nps_events(self.w.nps_dict['ships'])
         self.update_mq(nps_events)
